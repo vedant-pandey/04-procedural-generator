@@ -1,27 +1,43 @@
+const sdl3 = @import("sdl3");
 const std = @import("std");
-const _04_procedural_generator = @import("_04_procedural_generator");
+
+const ScreenWidth = 640;
+const ScreenHeight = 480;
 
 pub fn main() !void {
-    // Prints to stderr, ignoring potential errors.
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-    try _04_procedural_generator.bufferedPrint();
-}
+    defer sdl3.shutdown();
 
-test "simple test" {
-    const gpa = std.testing.allocator;
-    var list: std.ArrayList(i32) = .empty;
-    defer list.deinit(gpa); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(gpa, 42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+    const init_flags = sdl3.InitFlags{ .video = true };
+    try sdl3.init(init_flags);
+    defer sdl3.quit(init_flags);
 
-test "fuzz example" {
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            // Try passing `--fuzz` to `zig build test` and see if it manages to fail this test case!
-            try std.testing.expect(!std.mem.eql(u8, "canyoufindme", input));
+    const window = try sdl3.video.Window.init("Procedural generation", ScreenWidth, ScreenHeight, .{
+        .always_on_top = true,
+        .mouse_focus = true,
+        .input_focus = true,
+        .resizable = true,
+    });
+    defer window.deinit();
+
+    window.raise() catch unreachable;
+
+    var quit = false;
+    while (!quit) {
+
+        while (sdl3.events.poll()) |event| {
+            switch (event) {
+                .quit => quit = true,
+                .terminating => quit = true,
+                .key_down => {
+                    switch (event.key_down.key.?) {
+                        .q => {
+                            quit = true;
+                        },
+                        else => {},
+                    }
+                },
+                else => {},
+            }
         }
-    };
-    try std.testing.fuzz(Context{}, Context.testOne, .{});
+    }
 }

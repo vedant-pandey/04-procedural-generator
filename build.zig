@@ -51,6 +51,9 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.root_module.addImport("sdl3", sdl3.module("sdl3"));
+    const znoise = b.dependency("znoise", .{});
+    exe.root_module.addImport("znoise", znoise.module("root"));
+    exe.linkLibrary(znoise.artifact("FastNoiseLite"));
 
     b.installArtifact(exe);
 
